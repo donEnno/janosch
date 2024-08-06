@@ -15,15 +15,13 @@ def main(play_rounds=1, silent='no'):
     for i in tqdm(range(play_rounds)):
         random.shuffle(OG4)
         
-        player_names = OG4[:2]
-        agents = []
+        player_names = OG4[:2]          # play two v two
+        agents = []                     # no agents
+
         game = JanoschGame(player_names, agents, silent=silent_dict[silent])
 
         loser = game.start_game()
         score_board[loser] += 1
-
-    if silent == 'yes':
-        print()  # Move to the next line after completing the dots
 
     print(score_board)
 

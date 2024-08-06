@@ -21,6 +21,12 @@ class Player:
     def calculate_hand_value(self) -> int:
         return sum(card.value for card in self.hand)
     
+    def __repr__(self) -> str:
+        # sorted hand by value
+        return f"{self.name} - Hand: {self.hand}, Score: {self.score}"
+
+# - # Agent Methods --------------------------------------------------------------------- #
+
     def discard_highest_card(self) -> Card:
         highest_card = max(self.hand, key=lambda card: card.value)
         self.play_card(highest_card)
@@ -31,8 +37,3 @@ class Player:
             return False
         highest_card_value = max(self.hand, key=lambda card: card.value).value
         return discard_pile[-2].value < highest_card_value
-    
-    def __repr__(self) -> str:
-        # sorted hand by value
-        sorted_hand = sorted(self.hand, key=lambda card: card.value)
-        return f"{self.name} - Hand: {sorted_hand}, Score: {self.score}"
