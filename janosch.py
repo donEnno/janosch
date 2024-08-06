@@ -16,6 +16,8 @@ class JanoschGame:
         self.deck = None
         self.discard_pile = []
         self.silent = silent
+        self.current_action = None
+        self.last_action = 'start'
         self.initialize_game()
     
     def initialize_game(self):
@@ -27,18 +29,60 @@ class JanoschGame:
     def deal_cards(self):
         for player in self.players:
             player.draw_hand(self.deck)
-        self.discard_pile.append(self.deck.draw_card())
     
+    def is_set(self, cards):
+        if len(cards) < 2:
+            return False
+
+        # remove jokers
+        cards_wo_joker = [card for card in cards if card.rank != 0]
+
+
+        if all(card.rank == cards[0].rank for card in cards_wo_joker):
+            self.current_action = ('set', len(cards))
+            return True
+        else:
+            return False
+            
+    def is_straight(self, cards):
+
+        if len(cards) < 3:
+            return False
+
+        # False when not all cards have the same suit
+        if not all(card.suit == cards[0].suit for card in cards):
+            return False
+
+        jokers = [card for card in cards if card.rank == 0]
+        non_jokers = [card for card in cards if card.rank != 0]
+
+        sorted_cards = sorted(non_jokers, key=lambda card: card.rank)
+        
+        gaps = 0
+        for i in range(len(sorted_cards) - 1):
+            gap = sorted_cards[i + 1].rank - sorted_cards[i].rank - 1
+            gaps += gap
+            print(gap, gaps)
+        
+        if gaps <= len(jokers):
+            self.current_action = ('straight', len(cards))
+            return True
+        
+        return False
+
+
     def play_turn(self, player_index: int):
         player = self.players[player_index]
+        player.hand = sorted(player.hand, key=lambda card: card.rank)
+
         if not self.silent: print()
         if not self.silent: print(player)
         # self.print_hand(player)
 
         if player.is_human:
             if not self.janosch_called:
-                action = input("Janosch? Y/N: ").strip().upper()
-                if action == "Y":
+                action = input("Janosch? y/n: ").strip()
+                if action == "y":
                     self.call_janosch(player)
                     return
 
@@ -58,13 +102,24 @@ class JanoschGame:
             if not self.silent: print(f"{i + 1}: {card}")
 
     def play_card_action(self, player: Player):
-        discard_ix = int(input("Enter the index of the card to discard: ").strip()) - 1
-        card = self.find_card_in_hand(player, discard_ix)
+        discard_ixs = input("Enter indices of the cards to discard like 1 2 3: ").strip().split()
+        discard_ixs = [int(ix) - 1 for ix in discard_ixs]
 
-        if card:
-            player.play_card(card)
-            self.discard_pile.append(card)
-            if not self.silent: print(f"Discarded {card}")
+        selected_cards = [self.find_card_in_hand(player, ix) for ix in discard_ixs]
+
+        if len(selected_cards) == 1 or self.is_set(selected_cards) or self.is_straight(selected_cards):
+            
+            if self.is_straight(selected_cards):
+                selected_cards = sorted(selected_cards, key=lambda card: card.rank)
+            
+            if len(selected_cards) == 1:
+                self.current_action = ('single', 1)
+
+            for card in selected_cards:
+                player.play_card(card)
+                self.discard_pile.append(card)
+
+                if not self.silent: print(f"Discarded {card}")
         else:
             if not self.silent: print("Card not found in hand.")
 
@@ -88,14 +143,40 @@ class JanoschGame:
 
         
     def draw_card_action(self, player: Player):
-        draw_action = input(f'Draw {self.discard_pile[-2]} (1) or random (2)?: ').strip()
-        if draw_action == '1':
-            drawn_card = self.discard_pile.pop()
-        elif draw_action == '2':
-            drawn_card = self.deck.draw_card()
-        else:
-            if not self.silent: print('Invalid input')
-            return
+        current_ix = self.current_action[1]
+
+        if self.last_action == 'start':
+            available_cards = [self.discard_pile[-current_ix-1]]
+        else:    
+            last_ix = self.last_action[1]
+            available_cards = self.discard_pile[-last_ix-current_ix:-current_ix]
+
+        self.last_action = self.current_action
+        
+        if len(available_cards) == 1:
+            draw_action = input(f'Draw {self.discard_pile[-current_ix-1]} (1) or random (2)?: ').strip()
+            if draw_action == '1':
+                drawn_card = self.discard_pile.pop(-2)
+            elif draw_action == '2':
+                drawn_card = self.deck.draw_card()
+            else:
+                if not self.silent: print('Invalid input')
+                return
+
+        if len(available_cards) > 1:
+            draw_action = input(f'Draw one of {available_cards[0]} or {available_cards[-1]} (1 / 2) or random (3)?: ').strip()
+
+            if draw_action == '1':
+                self.discard_pile.remove(available_cards[0])
+                drawn_card = available_cards[0]
+            elif draw_action == '2':
+                self.discard_pile.remove(available_cards[-1])
+                drawn_card = available_cards[-1]
+            elif draw_action == '3':
+                drawn_card = self.deck.draw_card()
+            else:
+                if not self.silent: print('Invalid input')
+                return
 
         player.add_card(drawn_card)
         if not self.silent: print(f"Drew {drawn_card}")
