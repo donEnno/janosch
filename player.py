@@ -25,7 +25,10 @@ class Player:
         # sorted hand by value
         return f"{self.name} - Hand: {self.hand}, Score: {self.score}"
 
-# - # Agent Methods --------------------------------------------------------------------- #
+
+class Agent(Player):
+    def __init__(self, name: str):
+        super().__init__(name, is_human=False)
 
     def discard_highest_card(self) -> Card:
         highest_card = max(self.hand, key=lambda card: card.value)

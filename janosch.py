@@ -2,13 +2,19 @@ import random
 from typing import List, Optional
 from card import Card
 from deck import Deck
-from player import Player
+from player import Player, Agent
 
 JANOSCH_THRESHOLD = 15
 
 class JanoschGame:
     def __init__(self, player_names: List[str], agents: List[str], silent):
-        self.players = [Player(name, name not in agents) for name in player_names]
+        self.players = []
+        for name in player_names:
+            if name in agents:
+                self.players.append(Agent(name))
+            else:
+                self.players.append(Player(name))
+                
         self.current_player_index = 0
         
         self.janosch_called = False
