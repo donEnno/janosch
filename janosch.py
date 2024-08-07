@@ -116,11 +116,12 @@ class JanoschGame:
         # Logging --------------------------- # 
         if not self.silent: print()
         if not self.silent: print(player)
+        if not self.silent: print(f"Discard pile: {self.discard_pile[-1]}")
         # ----------------------------------- #
 
         if player.is_human:
             if not self.janosch_called:
-                action = input("Janosch? Type y if so, else type any button").strip()
+                action = input("Janosch? Type y if so, else type any button ").strip()
                 if action == "y":
                     self.call_janosch(player)
                     return
@@ -146,24 +147,32 @@ class JanoschGame:
             self.discard_pile = []
             self.deck.shuffle()
 
-        discard_ixs = input("Enter indices of the cards to discard (like 1 2 3): ").strip().split()
-        discard_ixs = [int(ix) - 1 for ix in discard_ixs]   # correct to zero-based
+        valid_move = False
+        while not valid_move:
+            discard_ixs = input("Enter indices of the cards to discard (like 1 2 3): ").strip().split()
+            discard_ixs = [int(ix) - 1 for ix in discard_ixs]   # correct to zero-based
+            selected_cards = [self.find_card_in_hand(player, ix) for ix in discard_ixs]
 
-        selected_cards = [self.find_card_in_hand(player, ix) for ix in discard_ixs]
-
-        # True if move is valid
-        if len(selected_cards) == 1 or self.is_set(selected_cards) or self.is_straight(selected_cards):
+            valid_input = all(0 <= ix < len(player.hand) for ix in discard_ixs)
+            valid_action = any(len(selected_cards) == 1 or self.is_set(selected_cards) or self.is_straight(selected_cards))
             
-            if len(selected_cards) == 1:
-                self.current_action = ('single', 1)
+            if not valid_input:
+                if not self.silent: print("Invalid input.")
 
-            for card in selected_cards: # iteratively because single card funtionality was there before
-                player.play_card(card)
-                self.discard_pile.append(card)
+            if not valid_action:
+                if not self.silent: print("Can only discard sets and straights.")
 
-                if not self.silent: print(f"Discarded {card}")
-        else:
-            if not self.silent: print("Invalid move.")
+            if valid_input and valid_action:
+                valid_move = True
+            
+        if len(selected_cards) == 1:
+            self.current_action = ('single', 1)
+
+        for card in selected_cards: # iteratively because single card funtionality was there before
+            player.play_card(card)
+            self.discard_pile.append(card)
+
+            if not self.silent: print(f"Discarded {card}")
 
     def draw_card_action(self, player: Player):
         current_ix = self.current_action[1] # number of cards played this turn
