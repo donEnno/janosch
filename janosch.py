@@ -4,7 +4,7 @@ from card import Card
 from deck import Deck
 from player import Player, Agent
 
-JANOSCH_THRESHOLD = 15
+JANOSCH_THRESHOLD = 5
 
 class JanoschGame:
     def __init__(self, player_names: List[str], agents: List[str], silent):
@@ -91,7 +91,7 @@ class JanoschGame:
     def call_janosch(self, player: Player):
         if player.calculate_hand_value() <= JANOSCH_THRESHOLD:
             self.janosch_called = True
-            if not self.silent: print(f"{player.name} called Janosch!")
+            if not self.silent: print(f"{player.name} called Janosch!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             self.janosch_caller = player
         else:
             if not self.silent: print("Janosch call invalid.")
@@ -154,7 +154,7 @@ class JanoschGame:
             selected_cards = [self.find_card_in_hand(player, ix) for ix in discard_ixs]
 
             valid_input = all(0 <= ix < len(player.hand) for ix in discard_ixs)
-            valid_action = any(len(selected_cards) == 1 or self.is_set(selected_cards) or self.is_straight(selected_cards))
+            valid_action = any([len(selected_cards) == 1, self.is_set(selected_cards), self.is_straight(selected_cards)])
             
             if not valid_input:
                 if not self.silent: print("Invalid input.")
@@ -227,9 +227,9 @@ class JanoschGame:
             random.shuffle(self.deck.cards)
             self.discard_pile = [self.deck.draw_card()]
 
-        card = player.discard_highest_card()
-        self.discard_pile.append(card)
-        if not self.silent: print(f"{player.name} (Agent) discarded {card}")
+        best_move = player.play_best_move()
+        self.discard_pile.extend(best_move)
+        if not self.silent: print(f"{player.name} (Agent) discarded {best_move}")
 
     def agent_draw_card_action(self, player: Player):
         if player.should_draw_from_discard_pile(self.discard_pile):

@@ -16,7 +16,7 @@ def main(play_rounds=1, silent='no'):
         random.shuffle(OG4)
         
         player_names = OG4[:2]          # play two v two
-        agents = []                     # no agents
+        agents = player_names                     # no agents
 
         game = JanoschGame(player_names, agents, silent=silent_dict[silent])
 
